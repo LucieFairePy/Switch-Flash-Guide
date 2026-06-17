@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Switch Flash — Guide interactif</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0a0e1a;
+      --surface:   rgba(255,255,255,0.04);
+      --border:    rgba(255,255,255,0.08);
+      --cyan:      #00e5c3;
+      --cyan-glow: rgba(0,229,195,0.25);
+      --orange:    #ff7043;
+      --orange-glow: rgba(255,112,67,0.25);
+      --text:      #e8eaf0;
+      --muted:     #7a8099;
+      --radius:    18px;
+      --r-sm:      10px;
+      --font:      'Inter', system-ui, sans-serif;
+      --font-head: 'Space Grotesk', system-ui, sans-serif;
+      --ease:      cubic-bezier(.4,0,.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── ANIMATED BACKGROUND ──────────────────────────────── */
+    .bg-scene {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.35;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .bg-orb:nth-child(1) {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, #0077ff55, transparent 70%);
+      top: -150px; left: -150px;
+      animation-duration: 20s;
+    }
+    .bg-orb:nth-child(2) {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #00e5c333, transparent 70%);
+      bottom: -100px; right: -100px;
+      animation-duration: 25s; animation-delay: -8s;
+    }
+    .bg-orb:nth-child(3) {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, #ff704322, transparent 70%);
+      top: 40%; left: 60%;
+      animation-duration: 15s; animation-delay: -4s;
+    }
+    .grid-overlay {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(60px,40px) scale(1.1); }
+    }
+
+    /* ─── LAYOUT ───────────────────────────────────────────── */
+    .app { position: relative; z-index: 1; min-height: 100dvh; display: flex; flex-direction: column; }
+
+    /* ─── NAV ──────────────────────────────────────────────── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 2rem;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,14,26,0.7);
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.05em;
+      background: linear-gradient(90deg, var(--cyan), #0077ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-badge {
+      font-size: 0.7rem; font-weight: 600;
+      padding: 0.3rem 0.8rem; border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--muted); letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ─── HERO / CHOICE ────────────────────────────────────── */
+    #choice-screen {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3rem 1.5rem 5rem;
+      gap: 3rem;
+      animation: fadeUp .7s var(--ease) both;
+    }
+    .hero-eyebrow {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.18em;
+      color: var(--cyan); margin-bottom: 0.6rem;
+    }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 6vw, 3.8rem);
+      font-weight: 700; line-height: 1.1;
+      text-align: center;
+      background: linear-gradient(160deg, #fff 30%, #7a8099);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      max-width: 700px;
+    }
+    .hero-sub {
+      font-size: 1rem; color: var(--muted);
+      text-align: center; max-width: 420px; line-height: 1.6;
+    }
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      width: 100%; max-width: 700px;
+    }
+    .choice-card {
+      position: relative; overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+      -webkit-tap-highlight-color: transparent;
+      text-align: left;
+      display: flex; flex-direction: column;
+    }
+    .choice-card::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 0;
+      opacity: 0;
+      transition: opacity .3s var(--ease);
+      pointer-events: none;
+    }
+    .choice-card.pc::before  { background: radial-gradient(ellipse at 50% 100%, var(--cyan-glow), transparent 65%); }
+    .choice-card.rcm::before { background: radial-gradient(ellipse at 50% 100%, var(--orange-glow), transparent 65%); }
+    .choice-card:active { transform: scale(0.97); }
+
+    /* card body */
+    .card-body {
+      padding: 2rem 1.8rem 2rem;
+      position: relative; z-index: 1;
+      flex: 1; display: flex; flex-direction: column; gap: 0.45rem;
+    }
+    .card-label {
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      margin-bottom: 0.1rem;
+    }
+    .choice-card.pc  .card-label { color: var(--cyan); }
+    .choice-card.rcm .card-label { color: var(--orange); }
+    .card-title {
+      font-family: var(--font-head);
+      font-size: 1.2rem; font-weight: 700;
+      color: var(--text);
+    }
+    .card-desc {
+      font-size: 0.83rem; color: var(--muted); line-height: 1.55;
+      flex: 1;
+    }
+    .card-cta {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.82rem; font-weight: 600;
+      margin-top: 0.8rem;
+      transition: gap .2s var(--ease);
+    }
+    .choice-card.pc  .card-cta { color: var(--cyan); }
+    .choice-card.rcm .card-cta { color: var(--orange); }
+
+    /* ─── TUTORIAL SCREEN ──────────────────────────────────── */
+    #tutorial-screen {
+      display: none; flex-direction: column;
+      animation: fadeUp .5s var(--ease) both;
+    }
+
+    /* ─── TUTORIAL HEADER ──────────────────────────────────── */
+    .tut-header {
+      padding: 1.5rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font);
+      font-size: 0.85rem; font-weight: 500;
+      padding: 0.6rem 1.2rem; border-radius: 50px;
+      cursor: pointer; transition: all .2s var(--ease);
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+    }
+
+    .tut-mode-badge {
+      font-size: 0.78rem; font-weight: 600;
+      padding: 0.4rem 1rem; border-radius: 50px;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .tut-mode-badge.windows { background: rgba(0,229,195,0.12);  color: var(--cyan);   border: 1px solid rgba(0,229,195,0.3); }
+    .tut-mode-badge.mac     { background: rgba(180,120,255,0.12); color: #b478ff;       border: 1px solid rgba(180,120,255,0.3); }
+    .tut-mode-badge.rcm     { background: rgba(255,112,67,0.12);  color: var(--orange); border: 1px solid rgba(255,112,67,0.3); }
+    .tut-progress-wrap { flex: 1; min-width: 120px; }
+    .tut-progress-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .tut-progress-bar {
+      height: 4px; background: var(--border); border-radius: 4px; overflow: hidden;
+    }
+    .tut-progress-fill {
+      height: 100%; border-radius: 4px;
+      transition: width .4s var(--ease);
+    }
+    .tut-progress-fill.windows { background: linear-gradient(90deg, var(--cyan), #0077ff); }
+    .tut-progress-fill.mac     { background: linear-gradient(90deg, #b478ff, #7c3aed); }
+    .tut-progress-fill.rcm     { background: linear-gradient(90deg, var(--orange), #ff3d00); }
+
+    /* ─── STEPS ────────────────────────────────────────────── */
+    .steps-container {
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem 6rem;
+      gap: 5rem;
+    }
+    .step {
+      width: 100%; max-width: 860px;
+      opacity: 0; transform: translateY(30px);
+      transition: opacity .6s var(--ease), transform .6s var(--ease);
+    }
+    .step.visible { opacity: 1; transform: translateY(0); }
+    .step-meta {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .step-number {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-weight: 700; font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .step-number.windows { background: rgba(0,229,195,0.15);  color: var(--cyan);   border: 1px solid rgba(0,229,195,0.4); }
+    .step-number.mac     { background: rgba(180,120,255,0.15); color: #b478ff;       border: 1px solid rgba(180,120,255,0.4); }
+    .step-number.rcm     { background: rgba(255,112,67,0.15);  color: var(--orange); border: 1px solid rgba(255,112,67,0.4); }
+    .step-caption {
+      font-family: var(--font-head); font-size: 1.1rem; font-weight: 600;
+    }
+    .step-img-wrap {
+      border-radius: var(--radius); overflow: hidden;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      position: relative;
+      transition: box-shadow .3s var(--ease), transform .3s var(--ease);
+    }
+    .step-img-wrap img {
+      width: 100%; height: auto; display: block;
+      transition: filter .3s;
+    }
+    .step-img-wrap .img-placeholder {
+      width: 100%; aspect-ratio: 16/9;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.8rem;
+      background: rgba(255,255,255,0.02);
+      color: var(--muted); font-size: 0.85rem;
+    }
+    .img-placeholder-icon { font-size: 2rem; opacity: 0.4; }
+
+    /* ─── CONNECTOR LINE ───────────────────────────────────── */
+    .step-connector {
+      width: 2px; height: 60px;
+      margin: -2rem auto;
+      border-radius: 2px;
+    }
+    .step-connector.windows { background: linear-gradient(180deg, transparent, var(--cyan),   transparent); }
+    .step-connector.mac     { background: linear-gradient(180deg, transparent, #b478ff,       transparent); }
+    .step-connector.rcm     { background: linear-gradient(180deg, transparent, var(--orange), transparent); }
+
+    /* ─── WARNING / TIP NOTE ──────────────────────────────── */
+    .step-note {
+      width: 100%; max-width: 860px;
+      border-radius: var(--r-sm);
+      padding: 1rem 1.2rem;
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.85rem; line-height: 1.55;
+    }
+    .step-note.warning {
+      background: rgba(255,170,0,0.08);
+      border: 1px solid rgba(255,170,0,0.3);
+      color: #ffd060;
+    }
+    .step-note.tip {
+      background: rgba(0,229,195,0.06);
+      border: 1px solid rgba(0,229,195,0.2);
+      color: var(--muted);
+    }
+    .step-note-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .step-note a { color: inherit; text-decoration: underline; }
+
+    /* ─── DONE CARD ────────────────────────────────────────── */
+    .done-card {
+      width: 100%; max-width: 860px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      text-align: center;
+      opacity: 0; transform: translateY(30px);
+      transition: opacity .6s var(--ease) .3s, transform .6s var(--ease) .3s;
+    }
+    .done-card.visible { opacity: 1; transform: translateY(0); }
+    .done-card .done-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .done-card h2 { font-family: var(--font-head); font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .done-card p  { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+    /* ─── COMPAT BANNER ───────────────────────────────────── */
+    .compat-banner {
+      width: 100%; max-width: 700px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.5rem;
+      display: flex; flex-direction: column; gap: 0.8rem;
+    }
+    .compat-banner-title {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+    .compat-rows { display: flex; flex-direction: column; gap: 0.55rem; }
+    .compat-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.84rem;
+    }
+    .compat-row .tag {
+      font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.6rem;
+      border-radius: 6px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .tag-ok  { background: rgba(0,229,195,0.12); color: var(--cyan);   border: 1px solid rgba(0,229,195,0.25); }
+    .tag-no  { background: rgba(255,70,70,0.12);  color: #ff6b6b;       border: 1px solid rgba(255,70,70,0.25); }
+    .tag-check { background: rgba(255,170,0,0.12); color: #ffd060;      border: 1px solid rgba(255,170,0,0.25); }
+    .compat-row span { color: var(--muted); }
+    .compat-row a { color: var(--cyan); text-decoration: none; font-weight: 500; }
+    .compat-divider { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
+
+    /* ─── FOOTER ───────────────────────────────────────────── */
+    footer {
+      margin-top: auto;
+      padding: 2rem;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    footer .heart { color: #ff4d6d; }
+    footer strong { color: var(--text); }
+
+    /* ─── ANIMATIONS ───────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── iOS SAFE AREA ───────────────────────────────────── */
+    footer {
+      padding-bottom: max(2rem, calc(1rem + env(safe-area-inset-bottom)));
+    }
+    .steps-container {
+      padding-bottom: max(6rem, calc(4rem + env(safe-area-inset-bottom)));
+    }
+
+    /* ─── HOVER: touch devices ne triggent pas hover ───────── */
+    @media (hover: hover) {
+      .choice-card:hover              { transform: translateY(-6px); }
+      .choice-card.pc:hover           { border-color: var(--cyan);   box-shadow: 0 24px 70px var(--cyan-glow); }
+      .choice-card.rcm:hover          { border-color: var(--orange); box-shadow: 0 24px 70px var(--orange-glow); }
+      .choice-card:hover::before      { opacity: 1; }
+      .choice-card:hover .card-cta    { gap: 0.7rem; }
+      .step-img-wrap:hover            { transform: scale(1.01); }
+      .step-img-wrap.windows:hover    { box-shadow: 0 30px 80px var(--cyan-glow),       0 0 0 1px rgba(0,229,195,0.2); }
+      .step-img-wrap.mac:hover        { box-shadow: 0 30px 80px rgba(180,120,255,0.25), 0 0 0 1px rgba(180,120,255,0.2); }
+      .step-img-wrap.rcm:hover        { box-shadow: 0 30px 80px var(--orange-glow),     0 0 0 1px rgba(255,112,67,0.2); }
+      .back-btn:hover                 { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); }
+      .compat-row a:hover             { text-decoration: underline; }
+    }
+    /* Active feedback on touch */
+    @media (hover: none) {
+      .choice-card:active  { transform: scale(0.97); opacity: 0.85; }
+      .back-btn:active     { background: rgba(255,255,255,0.1); }
+    }
+
+    /* ─── TABLET 768px ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero-title      { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+      .steps-container { padding: 2.5rem 1.2rem 5rem; gap: 4rem; }
+      .step            { max-width: 100%; }
+      .step-note       { max-width: 100%; }
+      .done-card       { max-width: 100%; }
+    }
+
+    /* ─── MOBILE 480px ─────────────────────────────────────── */
+    @media (max-width: 480px) {
+      /* Nav */
+      nav              { padding: 0.9rem 1rem; }
+      .nav-logo        { font-size: 0.88rem; }
+      .nav-badge       { display: none; }
+
+      /* Home screen */
+      #choice-screen   { padding: 2rem 1rem 3.5rem; gap: 1.8rem; }
+      .hero-eyebrow    { font-size: 0.68rem; }
+      .hero-title      { font-size: clamp(1.6rem, 7vw, 2.2rem); }
+      .hero-sub        { font-size: 0.88rem; }
+
+      /* Choice grid — force single column */
+      .choice-grid     { grid-template-columns: 1fr; gap: 1rem; }
+      .card-body       { padding: 1.4rem 1.2rem; }
+      .card-title      { font-size: 1.1rem; }
+
+      /* Compat banner */
+      .compat-banner   { padding: 1rem; gap: 0.7rem; }
+      .compat-row      { flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; }
+      .compat-divider  { display: none; }
+
+      /* PC sub-choice back btn margin */
+      #choice-pc-screen > button { margin-left: 0 !important; }
+      #choice-pc-screen { padding: 1.5rem 1rem 3rem; gap: 1.5rem; }
+
+      /* Tutorial header */
+      .tut-header      { padding: 0.8rem 1rem; gap: 0.6rem; }
+      .tut-progress-wrap { display: none; }
+      .tut-mode-badge  { font-size: 0.7rem; padding: 0.3rem 0.7rem; }
+
+      /* Steps */
+      .steps-container { padding: 1.5rem 0.8rem 4rem; gap: 2.8rem; }
+      .step-meta       { gap: 0.75rem; margin-bottom: 0.9rem; }
+      .step-number     { width: 32px; height: 32px; font-size: 0.8rem; }
+      .step-caption    { font-size: 0.9rem; }
+      .step-connector  { height: 40px; margin: -1.2rem auto; }
+      .step-img-wrap   { border-radius: 12px; }
+
+      /* Notes */
+      .step-note       { padding: 0.8rem 1rem; font-size: 0.8rem; gap: 0.6rem; }
+
+      /* Done card */
+      .done-card       { padding: 1.8rem 1.2rem; }
+      .done-card h2    { font-size: 1.2rem; }
+    }
+
+    /* ─── VERY SMALL 360px ─────────────────────────────────── */
+    @media (max-width: 360px) {
+      .hero-title      { font-size: 1.45rem; }
+      .card-body       { padding: 1.2rem 1rem; }
+      .steps-container { padding: 1.2rem 0.6rem 3.5rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="bg-scene">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- NAV -->
+  <nav>
+    <span class="nav-logo">Switch Flash Guide</span>
+    <span class="nav-badge">Nintendo Switch</span>
+  </nav>
+
+  <!-- CHOICE SCREEN -->
+  <section id="choice-screen">
+    <div style="text-align:center">
+      <p class="hero-eyebrow">Guide interactif</p>
+      <h1 class="hero-title">Comment voulez-vous<br>procéder ?</h1>
+    </div>
+    <p class="hero-sub">Choisissez votre méthode pour accéder au tutoriel adapté à votre configuration.</p>
+
+    <div class="compat-banner">
+      <div class="compat-banner-title">Compatibilité avant de commencer</div>
+      <div class="compat-rows">
+        <div class="compat-row">
+          <span class="tag tag-ok">Compatible</span>
+          <span>Switch OG <strong style="color:var(--text)">HAC-001</strong> non-patchée</span>
+        </div>
+        <div class="compat-row">
+          <span class="tag tag-no">Incompatible</span>
+          <span>Switch Lite · Switch OLED · Switch V2 patchée</span>
+        </div>
+        <div class="compat-row">
+          <span class="tag tag-check">Vérifier</span>
+          <span>Numéro de série inconnu ?</span>
+          <div class="compat-divider"></div>
+          <a href="https://ismyswitchpatched.com" target="_blank">ismyswitchpatched.com →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-grid">
+
+      <div class="choice-card pc" onclick="showPcChoice()" role="button" tabindex="0">
+        <div class="card-body">
+          <div class="card-label">Via ordinateur</div>
+          <div class="card-title">Version PC</div>
+          <div class="card-desc">Injecte le payload avec TegraRcmGUI via un câble USB-C.</div>
+          <div class="card-cta">Choisir <span>→</span></div>
+        </div>
+      </div>
+
+      <div class="choice-card rcm" onclick="showTutorial('rcm')" role="button" tabindex="0">
+        <div class="card-body">
+          <div class="card-label">Sans PC</div>
+          <div class="card-title">RCM Loader</div>
+          <div class="card-desc">Injecte le payload avec un RCM Loader physique autonome.</div>
+          <div class="card-cta">Commencer <span>→</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PC SUB-CHOICE SCREEN -->
+  <section id="choice-pc-screen" style="display:none; flex-direction:column; align-items:center; justify-content:center; min-height:70vh; gap:2rem; padding:3rem 1.5rem 5rem; animation:fadeUp .5s var(--ease) both;">
+    <button class="back-btn" style="align-self:flex-start; margin-left:calc((100% - 700px)/2);" onclick="showHome()">← Retour</button>
+    <div style="text-align:center">
+      <p class="hero-eyebrow">Version PC</p>
+      <h1 class="hero-title" style="font-size:clamp(1.6rem,4vw,2.8rem)">Quel est votre système<br>d'exploitation ?</h1>
+    </div>
+    <div class="choice-grid">
+
+      <div class="choice-card pc" onclick="showTutorial('windows')" role="button" tabindex="0">
+        <div class="card-body">
+          <div class="card-label">Microsoft</div>
+          <div class="card-title">Windows</div>
+          <div class="card-desc">Utilise TegraRcmGUI, l'application Windows pour injecter le payload.</div>
+          <div class="card-cta">Commencer <span>→</span></div>
+        </div>
+      </div>
+
+      <div class="choice-card" style="--accent:#b478ff;" onclick="showTutorial('mac')" role="button" tabindex="0"
+           onmouseenter="this.style.borderColor='#b478ff'; this.style.boxShadow='0 24px 70px rgba(180,120,255,0.25)';"
+           onmouseleave="this.style.borderColor=''; this.style.boxShadow='';">
+        <div class="card-body">
+          <div class="card-label" style="color:#b478ff;">Apple · Linux</div>
+          <div class="card-title">Mac / Linux</div>
+          <div class="card-desc">Utilise WebRCM, un outil web compatible macOS et Linux, sans installation.</div>
+          <div class="card-cta" style="color:#b478ff;">Commencer <span>→</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TUTORIAL SCREEN -->
+  <section id="tutorial-screen">
+
+    <div class="tut-header">
+      <button class="back-btn" onclick="goBack()">
+        <span>←</span> Retour
+      </button>
+      <span id="tut-badge" class="tut-mode-badge"></span>
+      <div class="tut-progress-wrap">
+        <div class="tut-progress-label" id="tut-progress-label"></div>
+        <div class="tut-progress-bar">
+          <div class="tut-progress-fill" id="tut-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps-container" id="steps-container"></div>
+
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    Made with <span class="heart">❤️</span> by <strong>Lucifer.exe</strong>
+  </footer>
+
+</div>
+
+<script>
+  const STEPS = {
+    windows: [
+      { img: "Images/PC/Windows/step_1.png", caption: "Éteindre la console" },
+      { img: "Images/PC/Windows/step_2.png", caption: "Retirer le Joy-Con droit" },
+      { img: "Images/PC/Windows/step_3.png", caption: "Insérer le dongle RCM" },
+      { img: "Images/PC/Windows/step_4.png", caption: "Entrer en mode RCM" },
+      { img: "Images/PC/Windows/step_5.png", caption: "Télécharger et ouvrir TegraRcmGUI, puis sélectionner le fichier payload (Hekate)", note: { type: "tip", text: "💾 Fichiers nécessaires : <a href=\"https://github.com/eliboa/TegraRcmGUI/releases/latest\" target=\"_blank\">TegraRcmGUI</a> (extraire le .zip et lancer l'app) · <a href=\"https://github.com/ctcaer/hekate/releases/latest\" target=\"_blank\">Hekate</a> (télécharger le .zip, extraire et sélectionner le fichier <strong>hekate_ctcaer_X.X.X.bin</strong>)." } },
+      { img: "Images/PC/Windows/step_6.png", caption: "Connecter la Switch au PC" },
+      { img: "Images/PC/Windows/step_7.png", caption: "Injecter le fichier avec le bouton indiqué", note: { type: "warning", text: "⚠️ Vous ne voyez pas <strong>RCM OK</strong> dans TegraRcmGUI ? Vous avez raté l'étape 4 ou 5 — vérifiez le dongle RCM et réessayez." } },
+      { img: "Images/PC/Windows/step_8.png", caption: "Lancer Hekate" },
+      { img: "Images/PC/Windows/step_9.png", caption: "Lancer Atmosphère via EmuMMC" },
+    ],
+    mac: [
+      { img: "Images/PC/Mac/step_1.png", caption: "Éteindre la console" },
+      { img: "Images/PC/Mac/step_2.png", caption: "Retirer le Joy-Con droit" },
+      { img: "Images/PC/Mac/step_3.png", caption: "Insérer le dongle RCM" },
+      { img: "Images/PC/Mac/step_4.png", caption: "Entrer en mode RCM" },
+      { img: "Images/PC/Mac/step_5.png", caption: "Connecter la Switch au PC" },
+      { img: "Images/PC/Mac/step_6.png", caption: "Aller sur <a href=\"https://reubenjds.github.io/webrcm/\" target=\"_blank\" style=\"color:inherit;text-decoration:underline;\">WebRCM</a> → sélectionner <strong>Hekate</strong> version <strong>Latest</strong> → cliquer <strong>Launch Payload</strong>", note: { type: "warning", text: "⚠️ WebRCM utilise WebUSB — <strong>Safari et Firefox ne sont pas compatibles</strong>. Utilisez <strong>Chrome, Edge ou Brave</strong> uniquement." } },
+      { img: "Images/PC/Mac/step_7.png", caption: "Sélectionner votre Switch dans la liste qui apparaît" },
+      { img: "Images/PC/Mac/step_8.png", caption: "Lancer Hekate" },
+      { img: "Images/PC/Mac/step_9.png", caption: "Lancer Atmosphère via EmuMMC" },
+    ],
+    rcm: [
+      { img: "Images/RCM/step_1.png", caption: "Éteindre la console" },
+      { img: "Images/RCM/step_2.png", caption: "Retirer le Joy-Con droit" },
+      { img: "Images/RCM/step_3.png", caption: "Insérer le RCM Loader" },
+      { img: "Images/RCM/step_4.png", caption: "Entrer en mode RCM" },
+      { img: "Images/RCM/step_5.png", caption: "Appuyer sur le bouton du RCM Loader", note: { type: "warning", text: "⚠️ Le dongle RCM ne s'allume pas ? Vous avez raté l'étape 4 ou 5 — vérifiez la position du dongle et réessayez." } },
+      { img: "Images/RCM/step_6.png", caption: "Lancer Hekate" },
+      { img: "Images/RCM/step_7.png", caption: "Lancer Atmosphère via EmuMMC" },
+    ]
+  };
+
+  const BADGE_LABELS = {
+    windows: '💻 Windows',
+    mac:     '🍎 Mac / Linux',
+    rcm:     '📦 RCM Loader'
+  };
+
+  let currentMode = null;
+  let observer = null;
+
+  function showHome() {
+    hide('choice-pc-screen');
+    hide('tutorial-screen');
+    show('choice-screen');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function showPcChoice() {
+    hide('choice-screen');
+    show('choice-pc-screen');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function show(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'flex';
+  }
+  function hide(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  function showTutorial(mode) {
+    currentMode = mode;
+    const steps = STEPS[mode];
+    const colorClass = mode;
+
+    // Badge
+    const badge = document.getElementById('tut-badge');
+    badge.textContent = BADGE_LABELS[mode];
+    badge.className = 'tut-mode-badge ' + colorClass;
+
+    // Progress
+    const fill = document.getElementById('tut-progress-fill');
+    fill.className = 'tut-progress-fill ' + colorClass;
+    fill.style.width = '0%';
+    document.getElementById('tut-progress-label').textContent = `0 / ${steps.length} étapes`;
+
+    // Build steps
+    const container = document.getElementById('steps-container');
+    container.innerHTML = '';
+
+    steps.forEach((step, i) => {
+      // Connector (between steps)
+      if (i > 0) {
+        const conn = document.createElement('div');
+        conn.className = 'step-connector ' + colorClass;
+        container.appendChild(conn);
+      }
+
+      // Step
+      const el = document.createElement('div');
+      el.className = 'step';
+      el.dataset.index = i;
+      el.innerHTML = `
+        <div class="step-meta">
+          <div class="step-number ${colorClass}">${i + 1}</div>
+          <div class="step-caption">${step.caption}</div>
+        </div>
+        <div class="step-img-wrap ${colorClass}">
+          <img
+            src="${step.img}"
+            alt="Étape ${i + 1} — ${step.caption}"
+            loading="lazy"
+            onerror="this.parentNode.innerHTML='<div class=\\'img-placeholder\\'><span class=\\'img-placeholder-icon\\'>🖼️</span><span>Image à venir — ${step.caption}</span></div>'"
+          >
+        </div>
+      `;
+      container.appendChild(el);
+
+      // Note / warning after step
+      if (step.note) {
+        const note = document.createElement('div');
+        note.className = 'step-note ' + step.note.type;
+        note.innerHTML = `<span class="step-note-icon">${step.note.type === 'warning' ? '⚠️' : '💡'}</span><span>${step.note.text}</span>`;
+        container.appendChild(note);
+      }
+    });
+
+    // Done card
+    const done = document.createElement('div');
+    done.className = 'done-card';
+    done.innerHTML = `
+      <span class="done-icon">🎉</span>
+      <h2>Tutoriel terminé !</h2>
+      <p>Votre Nintendo Switch est maintenant configurée.<br>Profitez bien de votre setup !</p>
+    `;
+    container.appendChild(done);
+
+    // Switch screens
+    hide('choice-screen');
+    hide('choice-pc-screen');
+    const tutScreen = document.getElementById('tutorial-screen');
+    tutScreen.style.display = 'flex';
+    tutScreen.style.flexDirection = 'column';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    // Observe for animation + progress
+    setupObserver(steps.length);
+  }
+
+  function setupObserver(total) {
+    if (observer) observer.disconnect();
+    const fill = document.getElementById('tut-progress-fill');
+    const label = document.getElementById('tut-progress-label');
+    const allSteps = document.querySelectorAll('.step');
+    const done = document.querySelector('.done-card');
+    let maxVisible = 0;
+
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          const idx = parseInt(e.target.dataset.index ?? -1);
+          if (idx >= 0 && idx + 1 > maxVisible) {
+            maxVisible = idx + 1;
+            const pct = Math.round((maxVisible / total) * 100);
+            fill.style.width = pct + '%';
+            label.textContent = `${maxVisible} / ${total} étapes`;
+          }
+        }
+      });
+      // Done card
+      const doneEl = document.querySelector('.done-card');
+      if (doneEl) {
+        const r = doneEl.getBoundingClientRect();
+        if (r.top < window.innerHeight * 0.9) doneEl.classList.add('visible');
+      }
+    }, { threshold: 0.15 });
+
+    allSteps.forEach(s => observer.observe(s));
+    if (done) observer.observe(done);
+  }
+
+  function goBack() {
+    if (observer) { observer.disconnect(); observer = null; }
+    hide('tutorial-screen');
+    if (currentMode === 'windows' || currentMode === 'mac') {
+      show('choice-pc-screen');
+    } else {
+      show('choice-screen');
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  // Keyboard nav for choice cards
+  document.querySelectorAll('.choice-card').forEach(card => {
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+  });
+</script>
+</body>
+</html>
